@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Noto_Sans } from "next/font/google";
 import "./globals.css";
-import Link from "next/link";
+import DataInit from "./_component/DataInit";
+import Nav from "@/app/_component/nav";
 
 const NotoSans = Noto_Sans({
     subsets: ["latin"],
@@ -22,11 +23,8 @@ export default function RootLayout({
         <html lang="ko">
             <body className={`${NotoSans} antialiased `}>
                 <div className="flex items-start">
-                    <nav className="w-[334px] min-h-[100vh] bg-[#303642]">
-                        <Link href={"/"} className="text-white">
-                            HOME
-                        </Link>
-                    </nav>
+                    <DataInit />
+                    <Nav />
                     {children}
                 </div>
             </body>

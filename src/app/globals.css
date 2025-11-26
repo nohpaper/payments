@@ -26,4 +26,20 @@
 }
 @layer components {
   .grid_component { width:100%; padding:20px 40px; border-radius:20px; background-color:white;}
+  .filter_btn {
+    position:relative;
+    input {
+      position:absolute; top:0; left:0; opacity:0;
+      &:checked ~ label { color:white; border-color:#6B7177; background-color:#6B7177; }
+    }
+    label {
+      padding: 4px 10px 2px;cursor: pointer;border-radius: 20px;border: 1px solid #D3D3D3;box-sizing: border-box;color: black;font-size: 12px;font-weight: normal;background-color: white;transition: background-color .3s;
+      &:hover { background-color:#D3D3D3; }
+    }
+  }
+
+  .pending { color:#F59E0B;}
+  .success { color:#22C55E; }
+  .failed { color:#EF4444;}
+  .cancelled { color:#9CA3AF;}
 }

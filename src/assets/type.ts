@@ -14,7 +14,7 @@ interface CodeDescriptionProps {
     code: string;
     description: string;
 }
-interface PaymentsListProps {
+export interface PaymentsListProps {
     amount: string;
     currency: string;
     mchtCode: string;
@@ -23,13 +23,30 @@ interface PaymentsListProps {
     paymentCode: string;
     status: string;
 }
+export interface amountProps {
+    name: string;
+    amount: number[];
+}
 export interface SummaryProps {
-    totalAmount: {
-        [key: string]: number;
-    };
+    weekIdx: number;
+    weekAmount: amountProps[];
     totalCount: number;
     successRate: number;
-    failCancelCount: [number, number];
+    statusCount: {
+        name: string;
+        dataLength: number;
+    }[];
+}
+export interface FilterProps {
+    name: string;
+    checked: string | null;
+}
+export interface DataTableProps {
+    captionText: string;
+    sliceCount: number[] | number;
+    main: boolean;
+    filterSearch?: FilterProps[];
+    activeFilters?: FilterProps[];
 }
 
 //zustand
