@@ -1,14 +1,17 @@
+import { ResponseProps } from "@/lib/types/type";
+
 export function commaFc(amount: number | string, currencyText: string) {
-    const currency = currencyText;
-    if (currency === "KRW") {
-        return Number(amount)
-            .toFixed(0)
-            .toString()
-            .replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, ",");
-    } else {
-        return amount.toString().replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, ",");
+    if (amount !== null && amount !== undefined) {
+        if (currencyText === "KRW") {
+            return Math.round(Number(amount))
+                .toString()
+                .replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, ",");
+        } else {
+            return amount.toString().replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, ",");
+        }
     }
 }
+
 export function getWeekdaysUntilDate(dateString: string) {
     const targetDate = new Date(dateString);
     const dayOfWeek = targetDate.getDay(); // 0(일) ~ 6(토)
@@ -24,7 +27,7 @@ export function getWeekdaysUntilDate(dateString: string) {
     monday.setDate(targetDate.getDate() - daysToGoBack);
 
     // 마지막 날짜 계산 (일요일이면 토요일까지, 아니면 전날까지)
-    const endDay = dayOfWeek === 0 ? 6 : dayOfWeek;
+    const endDay = dayOfWeek === 0 ? 7 : dayOfWeek;
 
     for (let i = 0; i < endDay; i++) {
         const currentDate = new Date(monday);
@@ -37,4 +40,12 @@ export function getWeekdaysUntilDate(dateString: string) {
     }
 
     return result;
+}
+
+//서버 통신해서 가져온 data.message 가 success 맞는지 다시 한번 확인
+export function validateApiRes<T>(res: ResponseProps<T>) {
+    if (!res || res.message !== "success") {
+        throw new Error("API 응답이 잘못되었습니다.");
+    }
+    return res.data;
 }

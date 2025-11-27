@@ -1,7 +1,6 @@
 "use client";
-import { useListDataStore, useStatusDataStore } from "@/assets/store";
-import { useEffect, useState } from "react";
-import { SummaryProps } from "@/assets/type";
+import { usePaymentStore } from "@/lib/store/store";
+import { useCallback, useEffect, useMemo } from "react";
 
 import {
     Chart as ChartJS,
@@ -15,13 +14,13 @@ import {
     ArcElement,
 } from "chart.js";
 import { Doughnut, Line } from "react-chartjs-2";
-import { amountData, options, statusChartData } from "@/assets/chart";
+import { amountData, options, statusChartData } from "@/lib/chart/chart";
 import TransactionsTable from "@/app/_component/TransactionsTable";
-import { commaFc, getWeekdaysUntilDate } from "@/assets/fc";
+import { commaFc, getWeekdaysUntilDate } from "@/lib/utils/fc";
+import { TODAY } from "@/config";
 
-//임의로 today
-const today = "2025-11-10";
-const todaySplit = today.split("-");
+//오늘 날짜 쪼개기
+const todaySplit = TODAY.split("-");
 
 //차트
 //일별 거래 금액 추이(7일)
@@ -31,75 +30,35 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 
 export default function Home() {
     //zustand store 관련 변수
-    const { data, isLoading } = useListDataStore();
-    const statusData = useStatusDataStore((state) => state.data); //결제 상태 data
+    const { list, status, summary, isLoading, updateDashBoard } = usePaymentStore();
 
-    //데이터 계산
-    const [summary, setSummary] = useState<SummaryProps>({
-        weekIdx: new Date(today).getDay(),
-        weekAmount: [
-            {
-                name: "KRW",
-                amount: [0, 0, 0, 0, 0, 0, 0],
-            },
-            {
-                name: "USD",
-                amount: [0, 0, 0, 0, 0, 0, 0],
-            },
-        ],
-        totalCount: 0, //거래 건수
-        successRate: 0, //결제 완료
-        statusCount: [],
-    });
+    //차트 캐싱
+    const doughnutChartData = useMemo(
+        () =>
+            statusChartData(
+                status.map((d) => d.description),
+                summary.statusCount.map((d) => d.dataLength),
+            ),
+        [status, summary.statusCount],
+    );
+    const lineOptions = useMemo(() => options("일별 거래 금액 추이(7일)"), []);
+    const doughnutOptions = useMemo(() => options("금일 결제 상태"), []);
 
-    const findStatusCount = (name: string) => {
-        return summary.statusCount.find((d) => d.name === name);
-    };
+    //summary 에서 결제 상태 관련 찾기
+    const findStatusCount = useCallback(
+        (name: string) => summary.statusCount.find((d) => d.name === name),
+        [summary.statusCount],
+    );
+
+    //주간 날짜 배열
+    const weekDates = useMemo(() => getWeekdaysUntilDate(TODAY), [TODAY]);
 
     //데이터 로딩 확인
     useEffect(() => {
-        if (isLoading && data.length > 0) {
-            //data 값이 0보다 크고 로딩이 끝났을 경우
-            //오늘 날짜 데이터 찾기
-            const todayDate = data.filter((o) => o.paymentAt.split("T")[0] === today);
-            if (summary.weekIdx === null) return;
-            //summary.weekIdx 가 1인 경우(월요일)
-
-            //월요일부터 오늘까지의 각 data
-            const week = getWeekdaysUntilDate(today);
-
-            for (let i = 0; i < week.length; i++) {
-                const weekFilter = data.filter((o) => o.paymentAt.split("T")[0] === week[i]);
-
-                weekFilter.map((o) => {
-                    const existingCurrency = summary.weekAmount.find((a) => a.name === o.currency);
-                    if (existingCurrency) {
-                        existingCurrency.amount[i] += Number(o.amount);
-                    }
-                });
-            }
-
-            const summaryStatus = (statusName: string) => {
-                return todayDate.filter((o) => o.status === statusName);
-            };
-            //결제 완료 계산
-            const successMath = (summaryStatus("SUCCESS").length * 100) / todayDate.length;
-
-            //최상단 요약 카드에 값 삽입
-            setSummary((prev) => {
-                const statusDataArr = statusData.map((d) => ({
-                    name: d.code,
-                    dataLength: summaryStatus(d.code).length,
-                }));
-                return {
-                    ...prev,
-                    totalCount: todayDate.length,
-                    successRate: Number(Number(successMath).toFixed(0)),
-                    statusCount: statusDataArr,
-                };
-            });
+        if (!isLoading && list.length > 0) {
+            updateDashBoard(TODAY, weekDates);
         }
-    }, [data, isLoading]);
+    }, [list, isLoading]);
 
     return (
         <div className="w-[1120px] flex flex-wrap gap-[20px] ml-[334px] px-[110px]">
@@ -174,24 +133,17 @@ export default function Home() {
             <div className="grid_component">
                 <div className="flex justify-center gap-[20px]">
                     <Line
-                        options={options("일별 거래 금액 추이(7일)")}
+                        options={lineOptions}
                         data={amountData(summary.weekAmount, summary.weekIdx)}
                         height={300}
                     />
-                    <Doughnut
-                        options={options("금일 결제 상태")}
-                        data={statusChartData(
-                            statusData.map((d) => d.description),
-                            summary.statusCount.map((d) => d.dataLength),
-                        )}
-                        height={300}
-                    />
+                    <Doughnut options={doughnutOptions} data={doughnutChartData} height={300} />
                 </div>
             </div>
             <div className="grid_component">
                 <TransactionsTable
                     captionText={"최근 거래 내역(5건)"}
-                    sliceCount={-5}
+                    sliceCount={[0, 5]}
                     main={true}
                 />
             </div>

@@ -1,4 +1,4 @@
-import { amountProps } from "@/assets/type";
+import { amountProps } from "@/lib/types/type";
 
 //공통 옵션
 export const options = (title: string) => ({
