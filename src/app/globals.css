@@ -42,4 +42,9 @@
   .success { color:#22C55E; }
   .failed { color:#EF4444;}
   .cancelled { color:#9CA3AF;}
+
+  .ready { background-color:#F59E0B; }
+  .active { background-color:#22C55E; }
+  .closed { background-color:#EF4444; }
+  .inactive { background-color:#9CA3AF; }
 }

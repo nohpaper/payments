@@ -12,9 +12,11 @@ import onFetch from "@/lib/api/api";
 import { TODAY } from "@/config";
 interface UsePaymentStore {
     list: PaymentsListProps[];
+    merchantsList: merchantsListProps[];
     status: CodeDescriptionProps[];
     type: TypeDescriptionProps[];
-    merchantsList: merchantsListProps[];
+    mcht: CodeDescriptionProps[];
+    mchtModal: Record<string, never>;
     summary: SummaryProps;
     isLoading: boolean;
     error: string | null;
@@ -24,13 +26,16 @@ interface UsePaymentStore {
         totalCount: number;
     };
     updateDashBoard: (today: string, week: string[]) => void;
+    mchtModalOpen: (mchtCode: string | null) => void;
 }
 
 export const usePaymentStore = create<UsePaymentStore>((set, get) => ({
     list: [],
+    merchantsList: [],
     status: [],
     type: [],
-    merchantsList: [],
+    mcht: [],
+    mchtModal: {},
     summary: {
         weekIdx: new Date(TODAY).getDay() === 0 ? 7 : new Date(TODAY).getDay(),
         weekAmount: [
@@ -52,16 +57,18 @@ export const usePaymentStore = create<UsePaymentStore>((set, get) => ({
     initData: async () => {
         set({ isLoading: true });
         try {
-            const [listRes, statusRes, typeRes, merchantsListRes] = await Promise.all([
+            const [listRes, statusRes, typeRes, mchtRes, merchantsListRes] = await Promise.all([
                 onFetch("/payments/list"),
                 onFetch("/common/payment-status/all"),
                 onFetch("/common/paymemt-type/all"),
+                onFetch("/common/mcht-status/all"),
                 onFetch("/merchants/list"),
             ]);
             set({
                 list: validateApiRes(listRes),
                 status: validateApiRes(statusRes),
                 type: validateApiRes(typeRes),
+                mcht: validateApiRes(mchtRes),
                 merchantsList: validateApiRes(merchantsListRes),
                 error: null,
             });
@@ -146,4 +153,18 @@ export const usePaymentStore = create<UsePaymentStore>((set, get) => ({
                 summary: { ...state.summary, ...updatedData },
             };
         }),
+    mchtModalOpen: async (mchtCode) => {
+        try {
+            const mchtRes = await onFetch(`/merchants/details/${mchtCode}`);
+            set({
+                mchtModal: validateApiRes(mchtRes),
+            });
+        } catch (e) {
+            if (e instanceof Error) {
+                set({ error: e.message });
+            } else {
+                set({ error: "알 수 없는 오류" });
+            }
+        }
+    },
 }));

@@ -6,11 +6,13 @@ import { commaFc } from "@/lib/utils/fc";
 import { LIMIT_PAGE } from "@/config";
 import { useRouter } from "next/navigation";
 import useUrl from "@/lib/hook/hook";
+import MchtModel from "@/app/_component/MchtModel";
 
 export default function TransactionsTable(props: DataTableProps) {
+    const { status, type, merchantsList, isLoading, getPaginationList } = usePaymentStore();
     const router = useRouter();
     const { pathname, searchParams } = useUrl();
-    const { status, type, merchantsList, isLoading, getPaginationList } = usePaymentStore();
+    const mchtCode = searchParams.get("mcht");
 
     const [orderAsc, setOrderAsc] = useState(false); //내림차순
 
@@ -23,6 +25,7 @@ export default function TransactionsTable(props: DataTableProps) {
         payType: props.payType ?? null,
     };
     const { items, totalCount } = getPaginationList(search);
+
     return (
         <>
             <table className="w-full">
@@ -91,6 +94,10 @@ export default function TransactionsTable(props: DataTableProps) {
                         <tr>
                             <td className="p-[10px]">Loading...</td>
                         </tr>
+                    ) : items.length === 0 ? (
+                        <tr>
+                            <td className="p-[10px]">검색 결과가 없습니다.</td>
+                        </tr>
                     ) : (
                         items?.map((el, idx) => {
                             const statusData = status.find((t) => t.code === el.status);
@@ -114,7 +121,27 @@ export default function TransactionsTable(props: DataTableProps) {
                                         {el.paymentAt.replace("T", " ")}
                                     </td>
                                     <td className="p-[10px] text-black text-[14px]">
-                                        {merchantsName}
+                                        {!props.main ? (
+                                            <button
+                                                type="button"
+                                                className="cursor-pointer hover:text-[#253557]  hover:disabled:text-black disabled:text-black"
+                                                disabled={!merchantsName}
+                                                onClick={() => {
+                                                    const params = new URLSearchParams(
+                                                        searchParams.toString(),
+                                                    );
+                                                    params.set("mcht", el.mchtCode);
+                                                    router.push(
+                                                        `${pathname}?${params.toString()}`,
+                                                        { scroll: false },
+                                                    );
+                                                }}
+                                            >
+                                                {merchantsName}
+                                            </button>
+                                        ) : (
+                                            merchantsName
+                                        )}
                                     </td>
                                     <td className="p-[10px] text-black text-[14px]">
                                         {
@@ -151,6 +178,7 @@ export default function TransactionsTable(props: DataTableProps) {
                             key={i}
                             onClick={() => {
                                 const params = new URLSearchParams(searchParams.toString());
+                                params.delete("mcht");
                                 params.set("page", (i + 1).toString());
                                 router.push(`${pathname}?${params.toString()}`, {
                                     scroll: true,
@@ -163,6 +191,7 @@ export default function TransactionsTable(props: DataTableProps) {
                     ))}
                 </ul>
             )}
+            {mchtCode !== null ? <MchtModel mchtCode={mchtCode} /> : null}
         </>
     );
 }

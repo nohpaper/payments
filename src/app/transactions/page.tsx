@@ -18,6 +18,7 @@ export default function TransactionsPage() {
     //필터 조건 확인 URL 에 삽입/제거
     const changeFilter = (value: string, keyName: string) => {
         const params = new URLSearchParams(searchParams.toString());
+        params.delete("mcht");
 
         if (params.get(keyName) === value) {
             params.delete(keyName);
